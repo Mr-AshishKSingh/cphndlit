@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-slate-200 rounded-xl shadow-sm;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-white text-slate-700 border border-slate-300 hover:bg-slate-50;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer text-slate-600 hover:bg-slate-100;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-slate-700 mb-1;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .table-wrap {
+    @apply overflow-x-auto;
+  }
+
+  table.data-table {
+    @apply w-full text-sm text-left;
+  }
+
+  table.data-table thead th {
+    @apply px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200;
+  }
+
+  table.data-table tbody td {
+    @apply px-4 py-3 border-b border-slate-100 text-slate-700;
+  }
+
+  table.data-table tbody tr:hover {
+    @apply bg-slate-50;
+  }
+}

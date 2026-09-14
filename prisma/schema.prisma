@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  ON_LEAVE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  BLOCKED
+}
+
+enum LeaveType {
+  SICK
+  CASUAL
+  VACATION
+  UNPAID
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayrollStatus {
+  DRAFT
+  GENERATED
+  PAID
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  employee     Employee? @relation("UserEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId   String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  announcements   Announcement[]
+  reviewedLeaves  LeaveRequest[] @relation("LeaveReviewer")
+  reviewedExpenses Expense[]     @relation("ExpenseReviewer")
+  assignedTasks   Task[]         @relation("TaskAssigner")
+  uploadedDocs    Document[]     @relation("DocUploader")
+}
+
+model Department {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  employees Employee[]
+  createdAt DateTime   @default(now())
+}
+
+model Employee {
+  id           String         @id @default(cuid())
+  employeeCode String         @unique
+  firstName    String
+  lastName     String
+  email        String         @unique
+  phone        String?
+  position     String
+  departmentId String?
+  department   Department?    @relation(fields: [departmentId], references: [id])
+  status       EmployeeStatus @default(ACTIVE)
+  joinDate     DateTime
+  dateOfBirth  DateTime?
+  address      String?
+  basicSalary  Float          @default(0)
+  allowances   Float          @default(0)
+  bankName     String?
+  bankAccount  String?
+  avatarColor  String         @default("#6366f1")
+  managerId    String?
+  manager      Employee?      @relation("EmployeeManager", fields: [managerId], references: [id], onDelete: SetNull)
+  reports      Employee[]     @relation("EmployeeManager")
+
+  user            User?         @relation("UserEmployee")
+  attendances     Attendance[]
+  tasks           Task[]        @relation("TaskAssignee")
+  leaveRequests   LeaveRequest[]
+  leaveBalances   LeaveBalance[]
+  payrolls        Payroll[]
+  documents       Document[]
+  expenses        Expense[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Attendance {
+  id         String            @id @default(cuid())
+  employeeId String
+  employee   Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       DateTime
+  clockIn    DateTime?
+  clockOut   DateTime?
+  status     AttendanceStatus  @default(PRESENT)
+  notes      String?
+  createdAt  DateTime          @default(now())
+
+  @@unique([employeeId, date])
+}
+
+model Task {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  assignedToId String
+  assignedTo   Employee     @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
+  assignedById String
+  assignedBy   User         @relation("TaskAssigner", fields: [assignedById], references: [id])
+  dueDate      DateTime?
+  priority     TaskPriority @default(MEDIUM)
+  status       TaskStatus   @default(TODO)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  completedAt  DateTime?
+}
+
+model LeaveRequest {
+  id           String      @id @default(cuid())
+  employeeId   String
+  employee     Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type         LeaveType
+  startDate    DateTime
+  endDate      DateTime
+  reason       String?
+  status       LeaveStatus @default(PENDING)
+  reviewedById String?
+  reviewedBy   User?       @relation("LeaveReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  createdAt    DateTime    @default(now())
+}
+
+model LeaveBalance {
+  id         String    @id @default(cuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type       LeaveType
+  year       Int
+  totalDays  Float     @default(0)
+  usedDays   Float     @default(0)
+
+  @@unique([employeeId, type, year])
+}
+
+model Payroll {
+  id          String        @id @default(cuid())
+  employeeId  String
+  employee    Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month       Int
+  year        Int
+  basicSalary Float
+  allowances  Float         @default(0)
+  bonus       Float         @default(0)
+  deductions  Float         @default(0)
+  netPay      Float
+  status      PayrollStatus @default(DRAFT)
+  notes       String?
+  generatedAt DateTime      @default(now())
+  paidAt      DateTime?
+
+  @@unique([employeeId, month, year])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name         String
+  url          String
+  fileType     String
+  fileSize     Int
+  uploadedById String
+  uploadedBy   User     @relation("DocUploader", fields: [uploadedById], references: [id])
+  uploadedAt   DateTime @default(now())
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  pinned    Boolean  @default(false)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Expense {
+  id              String        @id @default(cuid())
+  employeeId      String
+  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title           String
+  category        String
+  amount          Float
+  date            DateTime
+  description     String?
+  receiptFileName String?
+  status          ExpenseStatus @default(PENDING)
+  reviewedById    String?
+  reviewedBy      User?         @relation("ExpenseReviewer", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?
+  createdAt       DateTime      @default(now())
+}
