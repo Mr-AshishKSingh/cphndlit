@@ -8,6 +8,7 @@ type Employee = { id: string; firstName: string; lastName: string };
 
 export function NewTaskForm({ employees }: { employees: Employee[] }) {
   const [open, setOpen] = useState(false);
+  const [assignToAll, setAssignToAll] = useState(false);
   const initialState: { error?: string } = {};
   const [state, formAction, pending] = useActionState(createTask, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -17,6 +18,7 @@ export function NewTaskForm({ employees }: { employees: Employee[] }) {
     if (wasPending.current && !pending && !state.error) {
       formRef.current?.reset();
       setOpen(false);
+      setAssignToAll(false);
     }
     wasPending.current = pending;
   }, [pending, state.error]);
@@ -50,8 +52,8 @@ export function NewTaskForm({ employees }: { employees: Employee[] }) {
           <textarea name="description" rows={2} className="input" />
         </div>
         <div>
-          <label className="label">Assign To *</label>
-          <select name="assignedToId" required className="input">
+          <label className="label">Assign To {!assignToAll && "*"}</label>
+          <select name="assignedToId" required={!assignToAll} disabled={assignToAll} className="input disabled:bg-slate-50 disabled:text-slate-400">
             <option value="">Select employee</option>
             {employees.map((e) => (
               <option key={e.id} value={e.id}>
@@ -59,6 +61,16 @@ export function NewTaskForm({ employees }: { employees: Employee[] }) {
               </option>
             ))}
           </select>
+          <label className="flex items-center gap-2 text-xs text-slate-600 mt-1.5">
+            <input
+              type="checkbox"
+              name="assignToAll"
+              checked={assignToAll}
+              onChange={(e) => setAssignToAll(e.target.checked)}
+              className="rounded border-slate-300"
+            />
+            Assign to all employees
+          </label>
         </div>
         <div>
           <label className="label">Priority</label>

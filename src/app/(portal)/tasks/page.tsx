@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Avatar, Badge, EmptyState } from "@/components/ui";
@@ -55,23 +56,25 @@ export default async function TasksPage() {
               ) : (
                 colTasks.map((t) => (
                   <div key={t.id} className="card p-4 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium text-slate-900">{t.title}</p>
-                      <Badge tone={taskPriorityTone[t.priority]}>{humanize(t.priority)}</Badge>
-                    </div>
-                    {t.description && <p className="text-xs text-slate-500 line-clamp-2">{t.description}</p>}
-                    <div className="flex items-center justify-between pt-1">
-                      {isAdmin ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar name={`${t.assignedTo.firstName} ${t.assignedTo.lastName}`} color={t.assignedTo.avatarColor} size={6} />
-                          <span className="text-xs text-slate-600">{t.assignedTo.firstName}</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-500">
-                          {t.dueDate ? `Due ${formatDate(t.dueDate)}` : "No due date"}
-                        </span>
-                      )}
-                    </div>
+                    <Link href={`/tasks/${t.id}`} className="block space-y-2 hover:opacity-80">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium text-slate-900">{t.title}</p>
+                        <Badge tone={taskPriorityTone[t.priority]}>{humanize(t.priority)}</Badge>
+                      </div>
+                      {t.description && <p className="text-xs text-slate-500 line-clamp-2">{t.description}</p>}
+                      <div className="flex items-center justify-between pt-1">
+                        {isAdmin ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar name={`${t.assignedTo.firstName} ${t.assignedTo.lastName}`} color={t.assignedTo.avatarColor} size={6} />
+                            <span className="text-xs text-slate-600">{t.assignedTo.firstName}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500">
+                            {t.dueDate ? `Due ${formatDate(t.dueDate)}` : "No due date"}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
                     <TaskStatusSelect taskId={t.id} status={t.status} canDelete={isAdmin} />
                   </div>
                 ))
