@@ -82,6 +82,21 @@ model User {
   uploadedDocs    Document[]     @relation("DocUploader")
   taskAttachments TaskAttachment[] @relation("TaskAttachmentUploader")
   taskComments    TaskComment[]    @relation("TaskCommentAuthor")
+  activityLogs    ActivityLog[]
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeId  String?
+  type        String
+  description String
+  path        String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([employeeId, createdAt])
 }
 
 model Department {

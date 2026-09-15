@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { verifyPassword, createSession, destroySession } from "@/lib/auth";
+import { verifyPassword, createSession, destroySession, getSession } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 
 export type LoginState = { error?: string };
 
@@ -39,10 +40,16 @@ export async function loginAction(
     name: user.employee ? `${user.employee.firstName} ${user.employee.lastName}` : "CEO Admin",
   });
 
+  await logActivity({ userId: user.id, employeeId: user.employeeId, type: "LOGIN", description: "Logged in" });
+
   redirect("/dashboard");
 }
 
 export async function logoutAction() {
+  const session = await getSession();
+  if (session) {
+    await logActivity({ userId: session.userId, employeeId: session.employeeId, type: "LOGOUT", description: "Logged out" });
+  }
   await destroySession();
   redirect("/login");
 }

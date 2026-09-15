@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin, requireSession } from "@/lib/auth";
 import { parseDateOnly } from "@/lib/date";
+import { logActivity } from "@/lib/activity";
+import { humanize } from "@/lib/status";
 
 export async function createTask(_prevState: { error?: string }, formData: FormData) {
   const session = await requireAdmin();
@@ -73,6 +75,13 @@ export async function updateTaskStatus(formData: FormData) {
   await prisma.task.update({
     where: { id: taskId },
     data: { status, completedAt: status === "DONE" ? new Date() : null },
+  });
+
+  await logActivity({
+    userId: session.userId,
+    employeeId: session.employeeId,
+    type: "ACTION",
+    description: `Changed task "${task.title}" to ${humanize(status)}`,
   });
 
   revalidatePath("/tasks");

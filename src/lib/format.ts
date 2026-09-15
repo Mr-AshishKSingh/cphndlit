@@ -34,3 +34,25 @@ export function monthName(month: number) {
 export function initials(first: string, last: string) {
   return `${first[0] ?? ""}${last[0] ?? ""}`.toUpperCase();
 }
+
+export function formatDuration(ms: number) {
+  if (ms <= 0) return "0m";
+  const totalMinutes = Math.round(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}m`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}m`;
+}
+
+export function timeAgo(date: Date | string) {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}

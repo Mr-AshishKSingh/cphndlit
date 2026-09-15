@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { checkTaskAccess } from "@/lib/task-access";
+import { logActivity } from "@/lib/activity";
 
 export async function postTaskComment(_prevState: { error?: string }, formData: FormData) {
   const taskId = String(formData.get("taskId") ?? "");
@@ -38,12 +39,28 @@ export async function postTaskComment(_prevState: { error?: string }, formData: 
           : { status: "IN_PROGRESS", completedAt: null },
     });
 
+    await logActivity({
+      userId: access.session.userId,
+      employeeId: access.session.employeeId,
+      type: "ACTION",
+      description:
+        decision === "APPROVE"
+          ? `Approved work on task "${access.task.title}"`
+          : `Requested changes on task "${access.task.title}"`,
+    });
+
     revalidatePath("/tasks");
     revalidatePath("/dashboard");
   } else {
     if (!body) return { error: "Write something before posting." };
     await prisma.taskComment.create({
       data: { taskId, authorId: access.session.userId, body },
+    });
+    await logActivity({
+      userId: access.session.userId,
+      employeeId: access.session.employeeId,
+      type: "ACTION",
+      description: `Commented on task "${access.task.title}"`,
     });
   }
 

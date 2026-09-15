@@ -5,6 +5,8 @@ import { differenceInCalendarDays } from "date-fns";
 import { prisma } from "@/lib/db";
 import { requireSession, requireAdmin } from "@/lib/auth";
 import { parseDateOnly } from "@/lib/date";
+import { logActivity } from "@/lib/activity";
+import { humanize } from "@/lib/status";
 
 export async function requestLeave(_prevState: { error?: string }, formData: FormData) {
   const session = await requireSession();
@@ -30,6 +32,13 @@ export async function requestLeave(_prevState: { error?: string }, formData: For
       endDate: parseDateOnly(endDate),
       reason,
     },
+  });
+
+  await logActivity({
+    userId: session.userId,
+    employeeId: session.employeeId,
+    type: "ACTION",
+    description: `Requested ${humanize(type)} leave`,
   });
 
   revalidatePath("/leave");

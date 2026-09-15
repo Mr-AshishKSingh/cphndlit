@@ -14,6 +14,7 @@ import {
   UserCircle,
   Sparkles,
   ShieldCheck,
+  Activity,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -28,6 +29,7 @@ type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/employees", label: "Employees", icon: Users, adminOnly: true },
+  { href: "/activity", label: "Activity", icon: Activity, adminOnly: true },
   { href: "/attendance", label: "Attendance", icon: CalendarCheck },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/payroll", label: "Payroll", icon: Wallet, adminOnly: true },

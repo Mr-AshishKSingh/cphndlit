@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession, requireAdmin } from "@/lib/auth";
 import { parseDateOnly } from "@/lib/date";
+import { logActivity } from "@/lib/activity";
+import { formatCurrency } from "@/lib/format";
 
 export async function submitExpense(_prevState: { error?: string }, formData: FormData) {
   const session = await requireSession();
@@ -28,6 +30,13 @@ export async function submitExpense(_prevState: { error?: string }, formData: Fo
       date: parseDateOnly(date),
       description,
     },
+  });
+
+  await logActivity({
+    userId: session.userId,
+    employeeId: session.employeeId,
+    type: "ACTION",
+    description: `Submitted expense "${title}" (${formatCurrency(amount)})`,
   });
 
   revalidatePath("/expenses");

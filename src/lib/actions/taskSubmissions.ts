@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { put, del } from "@vercel/blob";
 import { prisma } from "@/lib/db";
 import { checkTaskAccess } from "@/lib/task-access";
+import { logActivity } from "@/lib/activity";
 
 export async function saveSubmissionNotes(_prevState: { error?: string; success?: boolean }, formData: FormData) {
   const taskId = String(formData.get("taskId") ?? "");
@@ -16,6 +17,13 @@ export async function saveSubmissionNotes(_prevState: { error?: string; success?
   await prisma.task.update({
     where: { id: taskId },
     data: { submissionNotes: notes, submittedAt: new Date() },
+  });
+
+  await logActivity({
+    userId: access.session.userId,
+    employeeId: access.session.employeeId,
+    type: "ACTION",
+    description: `Submitted write-up for task "${access.task.title}"`,
   });
 
   revalidatePath(`/tasks/${taskId}`);
@@ -57,6 +65,13 @@ export async function uploadTaskAttachment(_prevState: { error?: string }, formD
       fileSize: file.size,
       uploadedById: access.session.userId,
     },
+  });
+
+  await logActivity({
+    userId: access.session.userId,
+    employeeId: access.session.employeeId,
+    type: "ACTION",
+    description: `Uploaded "${file.name}" to task "${access.task.title}"`,
   });
 
   revalidatePath(`/tasks/${taskId}`);

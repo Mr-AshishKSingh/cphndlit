@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { Sidebar } from "@/components/Sidebar";
 import { Topbar } from "@/components/Topbar";
+import { ActivityTracker } from "@/components/ActivityTracker";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -11,6 +12,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <div className="flex min-h-screen">
+      <ActivityTracker />
       <Sidebar isAdmin={isAdmin} />
       <div className="flex-1 min-w-0 flex flex-col">
         <Topbar name={session.name} role={session.role} isAdmin={isAdmin} />

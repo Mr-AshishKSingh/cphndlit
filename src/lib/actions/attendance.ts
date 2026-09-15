@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession, requireAdmin } from "@/lib/auth";
 import { startOfDay, endOfDay, parseDateOnly } from "@/lib/date";
+import { logActivity } from "@/lib/activity";
 
 export async function clockIn() {
   const session = await requireSession();
@@ -35,6 +36,13 @@ export async function clockIn() {
     });
   }
 
+  await logActivity({
+    userId: session.userId,
+    employeeId: session.employeeId,
+    type: "ACTION",
+    description: isLate ? "Clocked in (late)" : "Clocked in",
+  });
+
   revalidatePath("/attendance");
   revalidatePath("/dashboard");
   return {};
@@ -52,6 +60,12 @@ export async function clockOut() {
   if (existing.clockOut) return { error: "Already clocked out today." };
 
   await prisma.attendance.update({ where: { id: existing.id }, data: { clockOut: now } });
+  await logActivity({
+    userId: session.userId,
+    employeeId: session.employeeId,
+    type: "ACTION",
+    description: "Clocked out",
+  });
   revalidatePath("/attendance");
   revalidatePath("/dashboard");
   return {};
