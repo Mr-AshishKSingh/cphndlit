@@ -41,29 +41,31 @@ Four more sample employees were seeded (rahul.verma, ananya.iyer, karan.mehta, s
 
 ## Setting up storage (Neon + Vercel Blob)
 
-The easiest path is entirely inside the Vercel dashboard, no separate signups needed:
+This project (`ceo-portal` under the linked Vercel account) already has both provisioned via Vercel's Storage tab:
 
-1. Push this repo to GitHub (see below) and import it as a new Project in Vercel.
-2. In the project, go to **Storage → Create Database → Postgres** (this provisions a Neon database and automatically adds `DATABASE_URL` / `DIRECT_URL`... — Vercel names these `POSTGRES_URL` etc. by default, so after creating it, copy the pooled and direct connection strings into `DATABASE_URL` and `DIRECT_URL` in your project's Environment Variables to match what this app expects).
-3. Go to **Storage → Create Database → Blob**. This automatically adds `BLOB_READ_WRITE_TOKEN` to your project's environment variables — nothing else to do.
-4. Under **Settings → Environment Variables**, add `SESSION_SECRET` (generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`).
-5. For local development, run `vercel link` then `vercel env pull .env` to pull all of the above down to your machine, or copy the values manually from the dashboard into `.env`.
+- **Postgres**, via the Neon marketplace integration (Storage → Create Database → Postgres). This auto-adds a bunch of `POSTGRES_*` / `PG*` vars, but **this app specifically reads `DATABASE_URL` and `DIRECT_URL`**, which were set manually to the pooled and unpooled connection strings Neon provided.
+- **Blob**, via Storage → Create Database → Blob. This auto-adds `BLOB_READ_WRITE_TOKEN` — nothing else needed for that one.
+- `SESSION_SECRET` was generated separately (a different random value per environment) and added under Settings → Environment Variables.
+
+**Important gotcha**: Neon's pooled connection string alone isn't enough for Prisma — it needs `&pgbouncer=true` appended to `DATABASE_URL`, or every query fails with `Can't reach database server` even though the pooled endpoint is perfectly reachable (Prisma's prepared-statement usage doesn't work against PgBouncer's transaction-pooling mode without that flag). `DIRECT_URL` (unpooled, used only for migrations) does not need this flag.
+
+If you ever need to redo this setup from scratch (new project, rotated database, etc.):
+1. Import the repo into Vercel, add Postgres (Neon) and Blob from the Storage tab.
+2. In Environment Variables, set `DATABASE_URL` to Neon's pooled connection string **plus `&pgbouncer=true`**, and `DIRECT_URL` to the unpooled one, for all three environments (production/preview/development).
+3. Add `SESSION_SECRET`.
+4. For local development: `vercel link`, then `vercel env pull .env.local`.
+
+Neon's compute also auto-suspends when idle — the very first query after a period of inactivity can take several seconds and occasionally times out once before succeeding on retry. This is normal and only affects cold starts, not steady traffic.
 
 ## Deploying
 
 ```bash
-git push                       # if connected to GitHub, Vercel deploys automatically
+git push                       # Vercel deploys automatically (GitHub integration is connected)
 # or, from the CLI:
 npx vercel --prod
 ```
 
-Before the first deploy (or after any schema change), run migrations against the production database:
-
-```bash
-npm run db:migrate    # prisma migrate deploy, uses DIRECT_URL
-```
-
-You can run this from your local machine (with production env vars pulled via `vercel env pull`) or wire it into a Vercel deploy hook / GitHub Action if you want it automatic.
+Migrations run automatically as part of every build (`prisma migrate deploy && next build`, see `package.json`), so there's nothing extra to do after a schema change beyond pushing.
 
 ## Useful commands
 
