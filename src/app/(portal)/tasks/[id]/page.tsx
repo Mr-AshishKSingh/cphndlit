@@ -7,6 +7,7 @@ import { taskPriorityTone, taskStatusTone, humanize } from "@/lib/status";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { TaskDetailControls } from "@/components/TaskDetailControls";
 import { TaskSubmissionPanel } from "@/components/TaskSubmissionPanel";
+import { TaskComments } from "@/components/TaskComments";
 import { ArrowLeft } from "lucide-react";
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,6 +23,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       assignedTo: { include: { department: true } },
       assignedBy: { include: { employee: true } },
       attachments: { orderBy: { uploadedAt: "desc" } },
+      comments: {
+        orderBy: { createdAt: "asc" },
+        include: { author: { include: { employee: true } } },
+      },
     },
   });
 
@@ -29,6 +34,13 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   if (!isAdmin && task.assignedToId !== session.employeeId) redirect("/tasks");
 
   const canSubmit = task.assignedToId === session.employeeId;
+  const comments = task.comments.map((c) => ({
+    id: c.id,
+    body: c.body,
+    action: c.action,
+    createdAt: c.createdAt,
+    authorName: c.author.employee ? `${c.author.employee.firstName} ${c.author.employee.lastName}` : "CEO",
+  }));
 
   return (
     <div className="max-w-2xl">
@@ -101,6 +113,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           attachments={task.attachments}
           canEdit={canSubmit}
         />
+      </div>
+
+      <div className="mt-4">
+        <TaskComments taskId={task.id} comments={comments} isAdmin={isAdmin} />
       </div>
     </div>
   );

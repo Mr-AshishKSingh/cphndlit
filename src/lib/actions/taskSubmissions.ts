@@ -3,16 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { put, del } from "@vercel/blob";
 import { prisma } from "@/lib/db";
-import { requireSession } from "@/lib/auth";
-
-async function checkTaskAccess(taskId: string) {
-  const session = await requireSession();
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task) return null;
-  const isOwner = task.assignedToId === session.employeeId;
-  if (session.role !== "ADMIN" && !isOwner) return null;
-  return { session, task };
-}
+import { checkTaskAccess } from "@/lib/task-access";
 
 export async function saveSubmissionNotes(_prevState: { error?: string; success?: boolean }, formData: FormData) {
   const taskId = String(formData.get("taskId") ?? "");

@@ -6,7 +6,7 @@ import { taskPriorityTone, humanize } from "@/lib/status";
 import { formatDate } from "@/lib/format";
 import { NewTaskForm } from "@/components/NewTaskForm";
 import { TaskStatusSelect } from "@/components/TaskStatusSelect";
-import { Paperclip } from "lucide-react";
+import { Paperclip, MessageSquare } from "lucide-react";
 
 const COLUMNS = [
   { key: "TODO", label: "To Do" },
@@ -23,7 +23,7 @@ export default async function TasksPage() {
   const [tasks, employees] = await Promise.all([
     prisma.task.findMany({
       where: isAdmin ? {} : { assignedToId: session.employeeId! },
-      include: { assignedTo: true, _count: { select: { attachments: true } } },
+      include: { assignedTo: true, _count: { select: { attachments: true, comments: true } } },
       orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
     }),
     isAdmin
@@ -74,12 +74,20 @@ export default async function TasksPage() {
                             {t.dueDate ? `Due ${formatDate(t.dueDate)}` : "No due date"}
                           </span>
                         )}
-                        {(t.submissionNotes || t._count.attachments > 0) && (
-                          <span className="inline-flex items-center gap-1 text-xs text-emerald-600" title="Work submitted">
-                            <Paperclip className="h-3 w-3" />
-                            {t._count.attachments > 0 && t._count.attachments}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {(t.submissionNotes || t._count.attachments > 0) && (
+                            <span className="inline-flex items-center gap-1 text-xs text-emerald-600" title="Work submitted">
+                              <Paperclip className="h-3 w-3" />
+                              {t._count.attachments > 0 && t._count.attachments}
+                            </span>
+                          )}
+                          {t._count.comments > 0 && (
+                            <span className="inline-flex items-center gap-1 text-xs text-slate-400" title="Comments">
+                              <MessageSquare className="h-3 w-3" />
+                              {t._count.comments}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </Link>
                     <TaskStatusSelect taskId={t.id} status={t.status} canDelete={isAdmin} />

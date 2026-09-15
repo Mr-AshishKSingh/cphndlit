@@ -81,6 +81,7 @@ model User {
   assignedTasks   Task[]         @relation("TaskAssigner")
   uploadedDocs    Document[]     @relation("DocUploader")
   taskAttachments TaskAttachment[] @relation("TaskAttachmentUploader")
+  taskComments    TaskComment[]    @relation("TaskCommentAuthor")
 }
 
 model Department {
@@ -154,9 +155,21 @@ model Task {
   submissionNotes String?
   submittedAt     DateTime?
   attachments     TaskAttachment[]
+  comments        TaskComment[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   completedAt     DateTime?
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("TaskCommentAuthor", fields: [authorId], references: [id])
+  body      String
+  action    String?
+  createdAt DateTime @default(now())
 }
 
 model TaskAttachment {
