@@ -6,6 +6,7 @@ import { PageHeader, Avatar, Badge } from "@/components/ui";
 import { taskPriorityTone, taskStatusTone, humanize } from "@/lib/status";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { TaskDetailControls } from "@/components/TaskDetailControls";
+import { TaskSubmissionPanel } from "@/components/TaskSubmissionPanel";
 import { ArrowLeft } from "lucide-react";
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,11 +21,14 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     include: {
       assignedTo: { include: { department: true } },
       assignedBy: { include: { employee: true } },
+      attachments: { orderBy: { uploadedAt: "desc" } },
     },
   });
 
   if (!task) notFound();
   if (!isAdmin && task.assignedToId !== session.employeeId) redirect("/tasks");
+
+  const canSubmit = task.assignedToId === session.employeeId;
 
   return (
     <div className="max-w-2xl">
@@ -87,6 +91,16 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         <div className="pt-4 border-t border-slate-100">
           <TaskDetailControls taskId={task.id} status={task.status} canDelete={isAdmin} />
         </div>
+      </div>
+
+      <div className="mt-4">
+        <TaskSubmissionPanel
+          taskId={task.id}
+          initialNotes={task.submissionNotes}
+          submittedAt={task.submittedAt}
+          attachments={task.attachments}
+          canEdit={canSubmit}
+        />
       </div>
     </div>
   );
