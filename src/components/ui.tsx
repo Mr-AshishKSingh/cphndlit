@@ -14,13 +14,21 @@ export function PageHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+        <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{title}</h1>
         {description && <p className="text-sm text-slate-500 mt-1">{description}</p>}
       </div>
       {action}
     </div>
   );
 }
+
+const statTones: Record<string, string> = {
+  indigo: "from-indigo-500 to-violet-500 shadow-indigo-500/30",
+  emerald: "from-emerald-500 to-teal-500 shadow-emerald-500/30",
+  amber: "from-amber-500 to-orange-500 shadow-amber-500/30",
+  rose: "from-rose-500 to-pink-500 shadow-rose-500/30",
+  sky: "from-sky-500 to-cyan-500 shadow-sky-500/30",
+};
 
 export function StatCard({
   label,
@@ -35,29 +43,26 @@ export function StatCard({
   tone?: "indigo" | "emerald" | "amber" | "rose" | "sky";
   href?: string;
 }) {
-  const tones: Record<string, string> = {
-    indigo: "bg-indigo-50 text-indigo-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    amber: "bg-amber-50 text-amber-600",
-    rose: "bg-rose-50 text-rose-600",
-    sky: "bg-sky-50 text-sky-600",
-  };
-
   const content = (
-    <div className="card p-4 flex items-center gap-4 h-full">
-      <div className={clsx("h-11 w-11 rounded-lg flex items-center justify-center shrink-0", tones[tone])}>
+    <div className={clsx("card p-4 flex items-center gap-4 h-full", href && "card-interactive")}>
+      <div
+        className={clsx(
+          "h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br text-white shadow-sm",
+          statTones[tone]
+        )}
+      >
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
-        <p className="text-xl font-semibold text-slate-900">{value}</p>
+        <p className="text-xs font-medium text-slate-500 leading-snug">{label}</p>
+        <p className="text-xl font-semibold text-slate-900 tracking-tight">{value}</p>
       </div>
     </div>
   );
 
   if (href) {
     return (
-      <Link href={href} className="block hover:shadow-md transition-shadow rounded-xl">
+      <Link href={href} className="block rounded-2xl">
         {content}
       </Link>
     );
@@ -97,7 +102,7 @@ export function Avatar({ name, color, size = 9 }: { name: string; color?: string
     .toUpperCase();
   return (
     <div
-      className="rounded-full flex items-center justify-center text-white font-semibold shrink-0"
+      className="rounded-full flex items-center justify-center text-white font-semibold shrink-0 shadow-sm ring-2 ring-white"
       style={{
         backgroundColor: color ?? "#6366f1",
         width: `${size * 4}px`,

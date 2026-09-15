@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CEO Portal",
-  description: "Employee attendance, tasks, payroll and HR management portal",
+  title: "Company Dashboard",
+  description: "AI Automation Consultancy workforce portal — attendance, tasks, payroll and HR management",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

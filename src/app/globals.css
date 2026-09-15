@@ -18,20 +18,32 @@ body {
 }
 
 @layer components {
+  .brand-gradient {
+    @apply bg-gradient-to-br from-indigo-500 via-violet-500 to-cyan-400;
+  }
+
+  .brand-gradient-text {
+    @apply bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-300 bg-clip-text text-transparent;
+  }
+
   .card {
-    @apply bg-white border border-slate-200 rounded-xl shadow-sm;
+    @apply bg-white border border-slate-200/70 rounded-2xl shadow-sm shadow-slate-200/50;
+  }
+
+  .card-interactive {
+    @apply transition-all duration-200 hover:shadow-lg hover:shadow-indigo-100/60 hover:-translate-y-0.5 hover:border-indigo-200/70;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-sm shadow-indigo-500/30 hover:shadow-md hover:shadow-indigo-500/40 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-white text-slate-700 border border-slate-300 hover:bg-slate-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-slate-400 active:scale-[0.98];
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-red-600 text-white hover:bg-red-700;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer bg-red-600 text-white shadow-sm shadow-red-500/30 hover:bg-red-700 hover:shadow-md hover:shadow-red-500/40 active:scale-[0.98];
   }
 
   .btn-ghost {
@@ -39,7 +51,7 @@ body {
   }
 
   .input {
-    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
+    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500;
   }
 
   .label {
@@ -66,7 +78,11 @@ body {
     @apply px-4 py-3 border-b border-slate-100 text-slate-700;
   }
 
+  table.data-table tbody tr {
+    @apply transition-colors;
+  }
+
   table.data-table tbody tr:hover {
-    @apply bg-slate-50;
+    @apply bg-indigo-50/40;
   }
 }

@@ -1,6 +1,6 @@
-# CEO Portal
+# Company Dashboard
 
-A workforce management portal for attendance, tasks, payroll, leave, expenses, and company announcements. Built with Next.js, Prisma (Postgres), and Vercel Blob for document storage — designed to deploy to Vercel with real, persistent data.
+A workforce management portal for an AI Automation Consultancy — attendance, tasks, payroll, leave, expenses, and company announcements. Built with Next.js, Prisma (Postgres), and Vercel Blob for document storage — designed to deploy to Vercel with real, persistent data.
 
 ## Getting Started (local development)
 
