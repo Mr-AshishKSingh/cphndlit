@@ -18,14 +18,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Default logins
 
-| Role | Email | Password |
-| --- | --- | --- |
-| CEO / Admin | officialwork.ashish@gmail.com | admin123 |
-| Employee (sample) | priya.sharma@company.com | employee123 |
+Running `npm run db:seed` creates one admin account and a handful of sample employee accounts — see `prisma/seed.ts` for the exact emails and starter passwords it uses. New employees added through the Employees page get a starter password shown on screen right after creation.
 
-Four more sample employees were seeded (rahul.verma, ananya.iyer, karan.mehta, sneha.patel @company.com), all using `employee123`. New employees you add through the Employees page get the password `welcome123` — shown on screen right after creation.
-
-**Change the admin password after first login.**
+**Change every seeded password immediately after first login** — never leave a seeded/default password in place on a real deployment, and never commit real credentials to this file or anywhere else in the repo.
 
 ## What's included
 

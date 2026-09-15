@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
+import { DEFAULT_EMPLOYEE_PASSWORD } from "../src/lib/constants";
 
 const prisma = new PrismaClient();
 
@@ -15,8 +17,17 @@ async function main() {
     deptRecords[name] = dept.id;
   }
 
-  const adminEmail = "officialwork.ashish@gmail.com";
-  const adminPasswordHash = await bcrypt.hash("admin123", 10);
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  if (!adminEmail) {
+    throw new Error("Set SEED_ADMIN_EMAIL in your environment before seeding (never hardcode it in this file).");
+  }
+
+  // Only used the first time this admin account is created; `update: {}` below
+  // means an existing account's password is never touched by re-seeding.
+  const generatedAdminPassword = process.env.SEED_ADMIN_PASSWORD ?? randomBytes(9).toString("base64url");
+  const adminPasswordHash = await bcrypt.hash(generatedAdminPassword, 10);
+
+  const adminBefore = await prisma.user.findUnique({ where: { email: adminEmail } });
   await prisma.user.upsert({
     where: { email: adminEmail },
     update: {},
@@ -80,7 +91,7 @@ async function main() {
     },
   ];
 
-  const employeePasswordHash = await bcrypt.hash("employee123", 10);
+  const employeePasswordHash = await bcrypt.hash(DEFAULT_EMPLOYEE_PASSWORD, 10);
   const colors = ["#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#8b5cf6"];
 
   for (let i = 0; i < sampleEmployees.length; i++) {
@@ -130,8 +141,13 @@ async function main() {
   }
 
   console.log("Seed complete.");
-  console.log(`Admin login: ${adminEmail} / admin123`);
-  console.log("Employee logins: <email above> / employee123");
+  if (!adminBefore) {
+    console.log(`Admin account created: ${adminEmail}`);
+    console.log(`Admin password (shown once, change it after first login): ${generatedAdminPassword}`);
+  } else {
+    console.log(`Admin account already existed (${adminEmail}); password left unchanged.`);
+  }
+  console.log(`Sample employee accounts use the default password from DEFAULT_EMPLOYEE_PASSWORD (see src/lib/constants.ts).`);
 }
 
 main()

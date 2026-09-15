@@ -77,10 +77,6 @@ export default function LoginPage() {
             {pending ? "Signing in..." : "Sign in"}
           </button>
         </form>
-
-        <p className="text-center text-slate-500 text-xs mt-6">
-          Demo admin: officialwork.ashish@gmail.com / admin123
-        </p>
       </div>
     </div>
   );
