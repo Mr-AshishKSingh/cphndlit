@@ -50,7 +50,10 @@ async function AdminDashboard() {
       where: { month: now.getMonth() + 1, year: now.getFullYear() },
       _sum: { netPay: true },
     }),
-    prisma.department.findMany({ include: { _count: { select: { employees: true } } } }),
+    prisma.department.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { employees: true } } },
+    }),
     prisma.task.groupBy({ by: ["status"], _count: true }),
     prisma.announcement.findMany({
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
@@ -73,7 +76,9 @@ async function AdminDashboard() {
     trend.push({ day: shortWeekday(day), present, absent });
   }
 
-  const deptData = departments.map((d) => ({ name: d.name, value: d._count.employees }));
+  const deptData = departments
+    .filter((d) => d._count.employees > 0)
+    .map((d) => ({ name: d.name, value: d._count.employees }));
   const taskData = taskGroups.map((g) => ({ name: humanize(g.status), value: g._count }));
 
   return (
