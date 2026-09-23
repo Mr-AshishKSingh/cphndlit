@@ -7,6 +7,8 @@ import { Menu, X, LogOut, Sparkles } from "lucide-react";
 import { clsx } from "clsx";
 import { NAV_ITEMS } from "@/components/Sidebar";
 import { logoutAction } from "@/lib/actions/auth";
+import { CommandPalette } from "@/components/CommandPalette";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function Topbar({
   name,
@@ -46,10 +48,13 @@ export function Topbar({
           <span className="font-semibold text-sm text-slate-900 tracking-tight">Company Dashboard</span>
         </div>
 
-        <div className="hidden md:block" />
+        <div className="hidden md:block">
+          <CommandPalette isAdmin={isAdmin} />
+        </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <div className="text-right hidden sm:block ml-1">
             <p className="text-sm font-medium text-slate-900 leading-tight">{name}</p>
             <p className="text-xs text-slate-500 leading-tight">
               {role === "ADMIN" ? "CEO / Admin" : "Employee"}

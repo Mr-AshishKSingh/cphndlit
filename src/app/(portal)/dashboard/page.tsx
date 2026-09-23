@@ -3,6 +3,10 @@ import { prisma } from "@/lib/db";
 import { startOfDay, endOfDay, addDays, shortWeekday } from "@/lib/date";
 import { PageHeader, StatCard, Badge, EmptyState } from "@/components/ui";
 import { AttendanceTrendChart, DepartmentPieChart, TaskStatusChart } from "@/components/DashboardCharts";
+import { MilestonesWidget } from "@/components/MilestonesWidget";
+import { PerformanceWidget } from "@/components/PerformanceWidget";
+import { upcomingMilestones } from "@/lib/milestones";
+import { computeAttendanceStreak } from "@/lib/performance";
 import { formatCurrency, formatDate, monthName } from "@/lib/format";
 import { taskStatusTone, taskPriorityTone, humanize } from "@/lib/status";
 import {
@@ -38,6 +42,7 @@ async function AdminDashboard() {
     departments,
     taskGroups,
     announcements,
+    milestoneEmployees,
   ] = await Promise.all([
     prisma.employee.count({ where: { status: "ACTIVE" } }),
     prisma.attendance.count({
@@ -60,7 +65,13 @@ async function AdminDashboard() {
       take: 5,
       include: { author: { include: { employee: true } } },
     }),
+    prisma.employee.findMany({
+      where: { status: "ACTIVE" },
+      select: { id: true, firstName: true, lastName: true, avatarColor: true, dateOfBirth: true, joinDate: true },
+    }),
   ]);
+
+  const milestones = upcomingMilestones(milestoneEmployees);
 
   const trend = [];
   for (let i = 6; i >= 0; i--) {
@@ -126,6 +137,10 @@ async function AdminDashboard() {
           <AnnouncementList announcements={announcements} />
         </div>
       </div>
+
+      <div className="mt-4">
+        <MilestonesWidget milestones={milestones} />
+      </div>
     </div>
   );
 }
@@ -136,7 +151,18 @@ async function EmployeeDashboard({ employeeId }: { employeeId: string }) {
   const today1 = endOfDay(now);
   const year = now.getFullYear();
 
-  const [employee, todayAttendance, openTasks, upcomingTasks, leaveBalances, announcements] = await Promise.all([
+  const [
+    employee,
+    todayAttendance,
+    openTasks,
+    upcomingTasks,
+    leaveBalances,
+    announcements,
+    tasksTotal,
+    tasksDone,
+    recentAttendance,
+    milestoneEmployees,
+  ] = await Promise.all([
     prisma.employee.findUnique({ where: { id: employeeId }, include: { department: true } }),
     prisma.attendance.findFirst({ where: { employeeId, date: { gte: today0, lte: today1 } } }),
     prisma.task.count({ where: { assignedToId: employeeId, status: { in: ["TODO", "IN_PROGRESS"] } } }),
@@ -151,9 +177,21 @@ async function EmployeeDashboard({ employeeId }: { employeeId: string }) {
       take: 5,
       include: { author: { include: { employee: true } } },
     }),
+    prisma.task.count({ where: { assignedToId: employeeId } }),
+    prisma.task.count({ where: { assignedToId: employeeId, status: "DONE" } }),
+    prisma.attendance.findMany({
+      where: { employeeId, date: { gte: addDays(now, -120) } },
+      select: { date: true, status: true },
+    }),
+    prisma.employee.findMany({
+      where: { status: "ACTIVE" },
+      select: { id: true, firstName: true, lastName: true, avatarColor: true, dateOfBirth: true, joinDate: true },
+    }),
   ]);
 
   const totalRemaining = leaveBalances.reduce((sum, b) => sum + (b.totalDays - b.usedDays), 0);
+  const attendanceStreak = computeAttendanceStreak(recentAttendance);
+  const milestones = upcomingMilestones(milestoneEmployees);
 
   return (
     <div>
@@ -172,8 +210,8 @@ async function EmployeeDashboard({ employeeId }: { employeeId: string }) {
         <StatCard label="Department" value={employee?.department?.name ?? "—"} icon={Users} tone="indigo" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="card p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div className="card p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-slate-900">My Upcoming Tasks</h2>
             <Link href="/tasks" className="text-xs text-indigo-600 font-medium hover:underline">
@@ -200,6 +238,15 @@ async function EmployeeDashboard({ employeeId }: { employeeId: string }) {
           )}
         </div>
 
+        <PerformanceWidget
+          tasksDone={tasksDone}
+          tasksTotal={tasksTotal}
+          attendanceStreak={attendanceStreak}
+          leaveDaysRemaining={totalRemaining}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-slate-900">Announcements</h2>
@@ -209,6 +256,8 @@ async function EmployeeDashboard({ employeeId }: { employeeId: string }) {
           </div>
           <AnnouncementList announcements={announcements} />
         </div>
+
+        <MilestonesWidget milestones={milestones} title="Team Celebrations" />
       </div>
     </div>
   );
