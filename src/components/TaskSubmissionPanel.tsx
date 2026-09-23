@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { clsx } from "clsx";
 import { saveSubmissionNotes, uploadTaskAttachment, deleteTaskAttachment } from "@/lib/actions/taskSubmissions";
 import { formatDateTime } from "@/lib/format";
-import { FileText, Image as ImageIcon, Download, Trash2, UploadCloud, CheckCircle2, Eye } from "lucide-react";
+import { FileText, Image as ImageIcon, Download, Trash2, UploadCloud, CheckCircle2, Eye, RotateCcw } from "lucide-react";
 import { useTaskPreview } from "@/components/TaskPreviewContext";
 
 type Attachment = {
@@ -13,6 +13,8 @@ type Attachment = {
   fileType: string;
   fileSize: number;
   uploadedAt: Date;
+  reviewStatus: string | null;
+  reviewNote: string | null;
 };
 
 function formatFileSize(bytes: number) {
@@ -133,7 +135,15 @@ export function TaskSubmissionPanel({
               return (
                 <li key={a.id} className="flex items-center justify-between py-2.5 gap-2">
                   <button
-                    onClick={() => openPreview({ id: a.id, name: a.name, fileType: a.fileType })}
+                    onClick={() =>
+                      openPreview({
+                        id: a.id,
+                        name: a.name,
+                        fileType: a.fileType,
+                        reviewStatus: a.reviewStatus,
+                        reviewNote: a.reviewNote,
+                      })
+                    }
                     className={clsx(
                       "flex items-center gap-2 min-w-0 flex-1 text-left rounded-lg px-1.5 -mx-1.5 py-1 transition-colors hover:bg-slate-50",
                       isActive && "bg-indigo-50"
@@ -149,6 +159,17 @@ export function TaskSubmissionPanel({
                       <p className="text-xs text-slate-500">
                         {formatFileSize(a.fileSize)} · {formatDateTime(a.uploadedAt)}
                       </p>
+                      {a.reviewStatus === "APPROVED" && (
+                        <p className="text-xs text-emerald-600 flex items-center gap-1 mt-0.5">
+                          <CheckCircle2 className="h-3 w-3" /> Approved
+                        </p>
+                      )}
+                      {a.reviewStatus === "CHANGES_REQUESTED" && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
+                          <RotateCcw className="h-3 w-3 shrink-0" />
+                          <span className="truncate">Changes requested{a.reviewNote ? `: ${a.reviewNote}` : ""}</span>
+                        </p>
+                      )}
                     </div>
                     <Eye className="h-3.5 w-3.5 text-slate-300 shrink-0 ml-auto" />
                   </button>

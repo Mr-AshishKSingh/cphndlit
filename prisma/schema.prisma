@@ -81,6 +81,7 @@ model User {
   assignedTasks   Task[]         @relation("TaskAssigner")
   uploadedDocs    Document[]     @relation("DocUploader")
   taskAttachments TaskAttachment[] @relation("TaskAttachmentUploader")
+  reviewedAttachments TaskAttachment[] @relation("TaskAttachmentReviewer")
   taskComments    TaskComment[]    @relation("TaskCommentAuthor")
   activityLogs    ActivityLog[]
 }
@@ -188,16 +189,21 @@ model TaskComment {
 }
 
 model TaskAttachment {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   taskId       String
-  task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task         Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
   name         String
   url          String
   fileType     String
   fileSize     Int
   uploadedById String
-  uploadedBy   User     @relation("TaskAttachmentUploader", fields: [uploadedById], references: [id])
-  uploadedAt   DateTime @default(now())
+  uploadedBy   User      @relation("TaskAttachmentUploader", fields: [uploadedById], references: [id])
+  uploadedAt   DateTime  @default(now())
+  reviewStatus String?
+  reviewNote   String?
+  reviewedById String?
+  reviewedBy   User?     @relation("TaskAttachmentReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
 }
 
 model LeaveRequest {

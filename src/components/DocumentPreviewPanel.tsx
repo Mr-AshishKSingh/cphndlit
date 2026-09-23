@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Download, FileWarning, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { X, Download, FileWarning, Loader2, CheckCircle2, RotateCcw } from "lucide-react";
 import { clsx } from "clsx";
-import type { PreviewAttachment } from "@/components/TaskPreviewContext";
+import { useTaskPreview, type PreviewAttachment } from "@/components/TaskPreviewContext";
+import { reviewTaskAttachment } from "@/lib/actions/taskSubmissions";
 
 type PreviewKind = "image" | "pdf" | "text" | "spreadsheet" | "docx" | "unsupported";
 
@@ -211,15 +213,128 @@ function UnsupportedPreview({ url, name }: { url: string; name: string }) {
   );
 }
 
+function AttachmentReviewBar({
+  attachmentId,
+  taskId,
+  isAdmin,
+  reviewStatus,
+  reviewNote,
+  onReviewed,
+}: {
+  attachmentId: string;
+  taskId: string;
+  isAdmin: boolean;
+  reviewStatus: string | null;
+  reviewNote: string | null;
+  onReviewed: (patch: { reviewStatus: string; reviewNote: string | null }) => void;
+}) {
+  const [note, setNote] = useState("");
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function submit(decision: "APPROVED" | "CHANGES_REQUESTED") {
+    setError(null);
+    if (decision === "CHANGES_REQUESTED" && !note.trim()) {
+      setShowNoteInput(true);
+      setError("Explain what needs to be fixed on this file.");
+      return;
+    }
+    setPending(true);
+    const formData = new FormData();
+    formData.set("attachmentId", attachmentId);
+    formData.set("taskId", taskId);
+    formData.set("decision", decision);
+    formData.set("note", note.trim());
+    const result = await reviewTaskAttachment({}, formData);
+    setPending(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setShowNoteInput(false);
+    setNote("");
+    onReviewed({ reviewStatus: decision, reviewNote: decision === "CHANGES_REQUESTED" ? note.trim() : null });
+    router.refresh();
+  }
+
+  if (!isAdmin) {
+    if (!reviewStatus) return null;
+    return (
+      <div
+        className={clsx(
+          "px-4 py-2.5 text-xs border-b shrink-0 flex items-start gap-1.5",
+          reviewStatus === "APPROVED" ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-amber-50 border-amber-100 text-amber-700"
+        )}
+      >
+        {reviewStatus === "APPROVED" ? (
+          <>
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5" /> This file has been approved.
+          </>
+        ) : (
+          <>
+            <RotateCcw className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <span>Changes requested{reviewNote ? `: ${reviewNote}` : ""}</span>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 py-2.5 border-b border-slate-100 shrink-0 space-y-2">
+      {reviewStatus && (
+        <p className={clsx("text-xs", reviewStatus === "APPROVED" ? "text-emerald-600" : "text-amber-600")}>
+          Currently marked: {reviewStatus === "APPROVED" ? "Approved" : `Changes requested${reviewNote ? ` — ${reviewNote}` : ""}`}
+        </p>
+      )}
+      {showNoteInput && (
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={2}
+          placeholder="What needs to be fixed on this file?"
+          className="input !text-xs"
+        />
+      )}
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => submit("APPROVED")}
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" /> Approve this file
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => (showNoteInput ? submit("CHANGES_REQUESTED") : setShowNoteInput(true))}
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50"
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> {showNoteInput ? "Submit note" : "Flag this file"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function DocumentPreviewPanel({
   attachment,
+  taskId,
+  isAdmin,
   onClose,
 }: {
   attachment: PreviewAttachment;
+  taskId: string;
+  isAdmin: boolean;
   onClose: () => void;
 }) {
   const kind = getPreviewKind(attachment.name, attachment.fileType);
   const fileUrl = `/api/task-attachments/${attachment.id}`;
+  const { updatePreview } = useTaskPreview();
 
   return (
     <div className="card h-full flex flex-col overflow-hidden !p-0">
@@ -234,6 +349,14 @@ export function DocumentPreviewPanel({
           </button>
         </div>
       </div>
+      <AttachmentReviewBar
+        attachmentId={attachment.id}
+        taskId={taskId}
+        isAdmin={isAdmin}
+        reviewStatus={attachment.reviewStatus}
+        reviewNote={attachment.reviewNote}
+        onReviewed={updatePreview}
+      />
       <div className="flex-1 min-h-0 overflow-hidden bg-slate-50">
         {kind === "image" && <ImagePreview key={fileUrl} url={fileUrl} />}
         {kind === "pdf" && <iframe key={fileUrl} src={fileUrl} className="w-full h-full border-0" title={attachment.name} />}

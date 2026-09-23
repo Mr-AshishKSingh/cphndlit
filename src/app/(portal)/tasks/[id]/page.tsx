@@ -59,7 +59,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         }
       />
 
-      <TaskPreviewShell>
+      <TaskPreviewShell taskId={task.id} isAdmin={isAdmin}>
         <div className="card p-5 space-y-5">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Description</h3>
