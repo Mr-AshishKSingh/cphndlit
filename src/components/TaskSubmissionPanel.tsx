@@ -1,9 +1,11 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { clsx } from "clsx";
 import { saveSubmissionNotes, uploadTaskAttachment, deleteTaskAttachment } from "@/lib/actions/taskSubmissions";
 import { formatDateTime } from "@/lib/format";
-import { FileText, Image as ImageIcon, Download, Trash2, UploadCloud, CheckCircle2 } from "lucide-react";
+import { FileText, Image as ImageIcon, Download, Trash2, UploadCloud, CheckCircle2, Eye } from "lucide-react";
+import { useTaskPreview } from "@/components/TaskPreviewContext";
 
 type Attachment = {
   id: string;
@@ -39,6 +41,13 @@ export function TaskSubmissionPanel({
   const [uploadState, uploadAction, uploadPending] = useActionState(uploadTaskAttachment, uploadInitialState);
   const uploadFormRef = useRef<HTMLFormElement>(null);
   const wasUploadPending = useRef(false);
+  const { openPreview, closePreview, preview } = useTaskPreview();
+
+  useEffect(() => {
+    if (preview && !attachments.some((a) => a.id === preview.id)) {
+      closePreview();
+    }
+  }, [attachments, preview, closePreview]);
 
   useEffect(() => {
     if (wasUploadPending.current && !uploadPending && !uploadState.error) {
@@ -120,9 +129,16 @@ export function TaskSubmissionPanel({
           <ul className="divide-y divide-slate-100">
             {attachments.map((a) => {
               const isImage = a.fileType.startsWith("image/");
+              const isActive = preview?.id === a.id;
               return (
                 <li key={a.id} className="flex items-center justify-between py-2.5 gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    onClick={() => openPreview({ id: a.id, name: a.name, fileType: a.fileType })}
+                    className={clsx(
+                      "flex items-center gap-2 min-w-0 flex-1 text-left rounded-lg px-1.5 -mx-1.5 py-1 transition-colors hover:bg-slate-50",
+                      isActive && "bg-indigo-50"
+                    )}
+                  >
                     {isImage ? (
                       <ImageIcon className="h-4 w-4 text-slate-400 shrink-0" />
                     ) : (
@@ -134,19 +150,21 @@ export function TaskSubmissionPanel({
                         {formatFileSize(a.fileSize)} · {formatDateTime(a.uploadedAt)}
                       </p>
                     </div>
-                  </div>
+                    <Eye className="h-3.5 w-3.5 text-slate-300 shrink-0 ml-auto" />
+                  </button>
                   <div className="flex items-center gap-1 shrink-0">
                     <a
                       href={`/api/task-attachments/${a.id}`}
                       target="_blank"
                       rel="noreferrer"
                       className="btn-ghost !px-2"
+                      title="Download"
                     >
                       <Download className="h-4 w-4" />
                     </a>
                     {canEdit && (
                       <form action={deleteTaskAttachment.bind(null, a.id, taskId)}>
-                        <button type="submit" className="btn-ghost !px-2 text-red-600">
+                        <button type="submit" className="btn-ghost !px-2 text-red-600" title="Delete">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </form>
